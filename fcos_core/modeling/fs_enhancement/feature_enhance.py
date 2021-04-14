@@ -4,6 +4,7 @@ from fcos_core.modeling.dsc.dscFeature import dscFeature
 from fcos_core.modeling.fs_enhancement.fs_fusion import generateSceneFeatureMap as getScene
 # from fcos_core.modeling.fs_enhancement.fs import generateSceneFeatureMap as getScene
 from fcos_core.modeling.fs_enhancement.asff import ASFF
+import torch.nn.init as init
 from fcos_core.modeling.fs_enhancement.cbam import BasicBlock
 
 from fcos_core.modeling.fs_enhancement.rfb import BasicRFB as RFB
@@ -21,8 +22,14 @@ class featureInhanceHead(nn.Module):
 
         self.dsc=dscFeature()
 
-        #self.combine=convCombine()
-        self.combine = asffCombine()
+        self.combine=convCombine()
+        #self.combine = asffCombine()
+
+        for m in self.children():
+            # print(m)
+            # print('=' * 80)
+            # print('\n\n')
+            self.weights_init(m)
 
 
         # self.asff1= ASFF()
@@ -52,7 +59,7 @@ class featureInhanceHead(nn.Module):
         feature_DSC=self.dsc(features)
         feature_RFB=self.enhance(features)
         # feature_DSC = self.dsc(feature_RFB)
-        x=self.combine(feature_DSC,feature_RFB,features)
+        x=self.combine(feature_DSC,feature_RFB)
 
 
 
@@ -74,6 +81,19 @@ class featureInhanceHead(nn.Module):
 
 
         return x
+    def weights_init(self,m):
+        # print(m)
+        # print('='*80)
+        # print('\n\n')
+        for key in m.state_dict():
+            # print(key)
+            if key.split('.')[-1] == 'weight':
+                if 'conv' in key:
+                    init.kaiming_normal_(m.state_dict()[key], mode='fan_out')
+                if 'bn' in key:
+                    m.state_dict()[key][...] = 1
+            elif key.split('.')[-1] == 'bias':
+                m.state_dict()[key][...] = 0
 
 
 class convCombine(nn.Module):

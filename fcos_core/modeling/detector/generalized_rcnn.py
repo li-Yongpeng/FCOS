@@ -58,7 +58,7 @@ class GeneralizedRCNN(nn.Module):
         features = self.backbone(images.tensors)
 
 
-        features=self.enhance(features)
+        # features=self.enhance(features)
 
         proposals, proposal_losses = self.rpn(images, features, targets)
         if self.roi_heads:
